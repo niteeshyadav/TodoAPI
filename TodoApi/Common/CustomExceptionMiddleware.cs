@@ -1,22 +1,24 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+
 
 namespace TodoApi.Common
 {
     public class CustomExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<CustomExceptionMiddleware> _logger;
 
 
         // This is to use Next Middleware in the HTTP Pipeline
-        public CustomExceptionMiddleware(RequestDelegate next)
+        public CustomExceptionMiddleware(RequestDelegate next, ILogger<CustomExceptionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
 
@@ -24,10 +26,12 @@ namespace TodoApi.Common
         {
             try
             {
+                _logger.LogInformation("Start of Invoke()");
                 await _next.Invoke(httpContext);
             }
             catch (Exception ex)
             {
+                _logger.LogError("HandleExceptionAsync Exception Occurred");
                 await HandleExceptionAsync(httpContext, ex);
             }
         }

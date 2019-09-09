@@ -11,6 +11,8 @@ using TodoApi.Models;
 using TodoApi.Common;
 using Serilog;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.Swagger;
+using System.Collections.Generic;
 
 namespace TodoApi
 {
@@ -36,7 +38,7 @@ namespace TodoApi
             services.AddResponseCaching();
 
             // Validators
-            services.AddSingleton<IValidator<TodoItem>,ItemValidator> ();
+            services.AddSingleton<IValidator<TodoItem>, ItemValidator>();
 
             // override modelstate
             services.Configure<ApiBehaviorOptions>(options =>
@@ -53,6 +55,25 @@ namespace TodoApi
                     return new BadRequestObjectResult(result);
                 };
             });
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Info { Title = "My API + profiler integrated on top left page", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = "header",
+                    Type = "apiKey"
+                });
+                c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>>
+                {
+                    { "Bearer", new string[] { } }
+                });
+            });
+
+            // profiling
+            services.AddMiniProfiler(options => options.RouteBasePath = "/profiler");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -69,6 +90,19 @@ namespace TodoApi
 
             app.UseMiddleware<CustomExceptionMiddleware>();
             loggerFactory.AddSerilog();
+            
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            app.UseSwaggerUI(c =>
+            {
+                c.RoutePrefix = "api-doc";
+                c.SwaggerEndpoint("/swagger/api/swagger.json", "My API V1");
+            });
+
+            app.UseMiniProfiler();
+
             app.UseHttpsRedirection();
             app.UseMvc();
             
