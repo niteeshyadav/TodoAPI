@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,9 +14,12 @@ namespace TodoApi.Controllers
     public class TodoController : ControllerBase
     {
         private readonly TodoContext _context;
+        private readonly ILogger<TodoController> _logger;
 
-        public TodoController(TodoContext context)
+
+        public TodoController(TodoContext context, ILogger<TodoController> logger)
         {
+            _logger = logger;
             _context = context ?? throw new System.ArgumentNullException(nameof(context));
 
             if (_context.TodoItems.Count() == 0)
@@ -38,9 +41,11 @@ namespace TodoApi.Controllers
         [Route("{id}")]
         public async Task<ActionResult<TodoItem>> GetTodoItem(long id)
         {
+            _logger.LogInformation("Logging Started");
             var todoItem = await _context.TodoItems.FindAsync(id);
             if (todoItem == null)
             {
+                _logger.Log(LogLevel.Error, "Error Occured");
                 throw new NotFoundCustomException("No data found", $"Please check your parameters id: {id}");
             }
             return todoItem;

@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Linq;
 using TodoApi.Models;
 using TodoApi.Common;
+using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace TodoApi
 {
@@ -16,6 +18,8 @@ namespace TodoApi
     {
         public Startup(IConfiguration configuration)
         {
+            // Init Serilog configuration
+            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(configuration).CreateLogger();
             Configuration = configuration;
         }
 
@@ -52,7 +56,7 @@ namespace TodoApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -64,7 +68,7 @@ namespace TodoApi
             }
 
             app.UseMiddleware<CustomExceptionMiddleware>();
-
+            loggerFactory.AddSerilog();
             app.UseHttpsRedirection();
             app.UseMvc();
             
